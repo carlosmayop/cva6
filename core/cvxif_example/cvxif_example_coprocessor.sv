@@ -11,7 +11,7 @@ module cvxif_example_coprocessor
   import cvxif_instr_pkg::*;
 #(
     // CVXIF Types
-    parameter  int unsigned NrRgprPorts         = 2,
+    parameter  int unsigned NrRgprPorts         = 3,
     parameter  int unsigned XLEN                = 32,
     parameter  type         readregflags_t      = logic,
     parameter  type         writeregflags_t     = logic,
@@ -51,6 +51,8 @@ module cvxif_example_coprocessor
   registers_t registers;
   opcode_t opcode;
   hartid_t issue_hartid, hartid;
+  logic [2:0] funct3;
+  logic [1:0] funct2; 
   id_t issue_id, id;
   logic [4:0] issue_rd, rd;
   logic [XLEN-1:0] result;
@@ -111,42 +113,46 @@ module cvxif_example_coprocessor
       .opcode_o        (opcode),
       .hartid_o        (issue_hartid),
       .id_o            (issue_id),
-      .rd_o            (issue_rd)
+      .rd_o            (issue_rd),
+      .funct2_o        (funct2),
+      .funct3_o        (funct3)
   );
-
-  logic alu_valid;
+  
+  logic fxmadd_valid;
   // Result interface
-  copro_alu #(
+  copro_fxmadd #(
       .NrRgprPorts(NrRgprPorts),
       .XLEN(XLEN),
       .hartid_t(hartid_t),
       .id_t(id_t),
       .registers_t(registers_t)
-  ) i_copro_alu (
+  ) i_copro_fxmadd (
       .clk_i      (clk_i),
       .rst_ni     (rst_ni),
       .registers_i(registers),
       .opcode_i   (opcode),
+      .funct2     (funct2),
+      .funct3     (funct3),
       .hartid_i   (issue_hartid),
       .id_i       (issue_id),
       .rd_i       (issue_rd),
       .hartid_o   (hartid),
       .id_o       (id),
       .result_o   (result),
-      .valid_o    (alu_valid),
+      .valid_o    (fxmadd_valid),
       .rd_o       (rd),
       .we_o       (we)
   );
-
+  
   always_comb begin
-    cvxif_resp_o.result_valid  = alu_valid;  //TODO Should wait for ready from CPU
+    if(cvxif_req_i.result_ready) cvxif_resp_o.result_valid  = fxmadd_valid; //TODO Should wait for ready from CPU
+    else cvxif_resp_o.result_valid  = 0;
+
     cvxif_resp_o.result.hartid = hartid;
     cvxif_resp_o.result.id     = id;
     cvxif_resp_o.result.data   = result;
     cvxif_resp_o.result.rd     = rd;
     cvxif_resp_o.result.we     = we;
   end
-
-
 
 endmodule

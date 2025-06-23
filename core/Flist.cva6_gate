@@ -32,6 +32,7 @@ ${CVA6_REPO_DIR}/core/cvxif_example/cvxif_example_coprocessor.sv
 ${CVA6_REPO_DIR}/core/cvxif_example/instr_decoder.sv
 ${CVA6_REPO_DIR}/core/cvxif_example/compressed_instr_decoder.sv
 ${CVA6_REPO_DIR}/core/cvxif_example/copro_alu.sv
+${CVA6_REPO_DIR}/core/cvxif_example/copro_fxmadd.sv
 
 
 // Common Cells

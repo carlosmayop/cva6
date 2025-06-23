@@ -16,6 +16,8 @@ export TESTS_PATH="$ROOT_PROJECT/verif/tests"
 # RISCV-DV & COREV-DV
 export RISCV_DV_ROOT="$ROOT_PROJECT/verif/sim/dv"
 export CVA6_DV_ROOT="$ROOT_PROJECT/verif/env/corev-dv"
+export RISCV="$ROOT_PROJECT/tools/riscv-toolchain"
+export DV_SIMULATORS=veri-testharness
 
 if [ -z "$RISCV" ]; then
   echo "Error: RISCV variable undefined."

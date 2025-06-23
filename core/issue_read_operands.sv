@@ -484,7 +484,7 @@ module issue_read_operands
         .idx_o(idx_hzd_rs3[i]),
         .valid_o(rs3_raw_check[i])
     );
-    assign rs3_has_raw[i] = rs3_raw_check[i] && rs3_fpr[i];
+    assign rs3_has_raw[i] = rs3_raw_check[i] && (rs3_fpr[i] || (issue_instr_i[i].op == OFFLOAD));
   end
 
   // ----------------------------------
@@ -555,8 +555,8 @@ module issue_read_operands
           stall_rs2[i] = 1'b1;
         end
       end
-
-      if (rs3_has_raw[i] && rs3_fpr[i]) begin
+      
+      if (rs3_has_raw[i]) begin
         if (rs3_valid[i]) begin
           forward_rs3[i] = 1'b1;
         end else begin  // the operand is not available -> stall
@@ -653,17 +653,21 @@ module issue_read_operands
       if (forward_rs2[i]) begin
         fu_data_n[i].operand_b = rs2_res[i];
       end
+
       if ((CVA6Cfg.FpPresent || (CVA6Cfg.CvxifEn && OPERANDS_PER_INSTR == 3)) && forward_rs3[i]) begin
         fu_data_n[i].imm = imm_forward_rs3;
+      end /*else if (fu_data_n[i].operation == OFFLOAD) begin
+        fu_data_n[i].imm = imm_forward_rs3;
       end
-
+      $display(fu_data_n[i].operand_a, " ", fu_data_n[i].operand_b, " ", fu_data_n[i].imm);*/
+      
       // use the PC as operand a
       if (issue_instr_i[i].use_pc) begin
         fu_data_n[i].operand_a = {
           {CVA6Cfg.XLEN - CVA6Cfg.VLEN{issue_instr_i[i].pc[CVA6Cfg.VLEN-1]}}, issue_instr_i[i].pc
         };
       end
-
+ 
       // use the zimm as operand a
       if (issue_instr_i[i].use_zimm) begin
         // zero extend operand a

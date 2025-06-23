@@ -12,7 +12,7 @@ module instr_decoder #(
     parameter type               opcode_t                    = logic,
     parameter int                NbInstr                     = 1,
     parameter copro_issue_resp_t CoproInstr        [NbInstr] = {0},
-    parameter int unsigned       NrRgprPorts                 = 2,
+    parameter int unsigned       NrRgprPorts                 = 3,
     parameter type               hartid_t                    = logic,
     parameter type               id_t                        = logic,
     parameter type               x_issue_req_t               = logic,
@@ -32,7 +32,9 @@ module instr_decoder #(
     output opcode_t             opcode_o,
     output hartid_t             hartid_o,
     output id_t                 id_o,
-    output logic          [4:0] rd_o
+    output logic          [4:0] rd_o,
+    output logic          [1:0] funct2_o,
+    output logic          [2:0] funct3_o
 );
 
   logic [NbInstr-1:0] sel;
@@ -57,6 +59,8 @@ module instr_decoder #(
     hartid_o                   = '0;
     id_o                       = '0;
     rd_o                       = '0;
+    funct2_o                   = 2'b0;
+    funct3_o                   = 3'b0;
     for (int unsigned i = 0; i < NbInstr; i++) begin
       if (sel[i] && issue_valid_i) begin
         issue_resp_o.accept = CoproInstr[i].resp.accept;
@@ -72,6 +76,8 @@ module instr_decoder #(
         id_o     = issue_req_i.id;
         hartid_o = issue_req_i.hartid;
         rd_o     = issue_req_i.instr[11:7];
+        funct2_o = issue_req_i.instr[26:25];
+        funct3_o = issue_req_i.instr[14:12];
         for (int unsigned j = 0; j < NrRgprPorts; j++) begin
           registers_o[j] = issue_resp_o.register_read[j] ? register_i.rs[j] : '0;
         end
@@ -82,7 +88,7 @@ module instr_decoder #(
       issue_ready_o = 1'b1;
     end
   end
-
+  
   assert property (@(posedge clk_i) $onehot0(sel))
   else $warning("This offloaded instruction is valid for multiple coprocessor instructions !");
 

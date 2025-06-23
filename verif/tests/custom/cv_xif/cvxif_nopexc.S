@@ -21,17 +21,17 @@ main:
 
 # core of the test
 
-    LOAD_RS(a0, 0x332211);
-    LOAD_RS(a1, 0xDEADBEEF);
-    LOAD_RS(a2, 0xDEADBEEF);
+  li a0, 0x332211;
+  li a1, 0xDEADBEEF;
+  li a2, 0xDEADBEEF;
 
-    CUS_ADD(01010,01010,01010,01011);
-    CUS_NOP_EXC(00000,00000,00000,00000);
-    CUS_ADD(01010,01010,01010,01011);
-    CUS_ADD(01010,01010,01010,01011);
-    CUS_NOP_EXC(00000,00000,00000,00000);
-    CUS_ADD(11110,11000,11100,00001);
-    CUS_ADD(01111,00111,00111,00011);
+  .insn r CUSTOM_3, 0x1, 0x0, x10, x10, x11
+  CUS_NOP;
+  .insn r CUSTOM_3, 0x1, 0x0, x10, x10, x11
+  .insn r CUSTOM_3, 0x1, 0x0, x10, x10, x11
+  CUS_NOP;
+  .insn r CUSTOM_3, 0x1, 0x0, x24, x28, x1
+  .insn r CUSTOM_3, 0x1, 0x0, x7, x7, x3
 
 # (example of) final self-check test
   li a0, 0xCAFE;

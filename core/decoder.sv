@@ -159,7 +159,7 @@ module decoder
   end
 
   always_comb begin : decoder
-
+    
     imm_select                             = NOIMM;
     is_control_flow_instr_o                = 1'b0;
     illegal_instr                          = 1'b0;
@@ -1645,6 +1645,7 @@ module decoder
     end
     if (CVA6Cfg.CvxifEn) begin
       if (~ex_i.valid && (is_illegal_i || illegal_instr)) begin
+    
         instruction_o.fu = CVXIF;
         instruction_o.rs1 = instr.r4type.rs1;
         instruction_o.rs2 = instr.r4type.rs2;
@@ -1653,7 +1654,8 @@ module decoder
         imm_select             = instr.rtype.opcode == riscv::OpcodeMadd ||
                                  instr.rtype.opcode == riscv::OpcodeMsub ||
                                  instr.rtype.opcode == riscv::OpcodeNmadd ||
-                                 instr.rtype.opcode == riscv::OpcodeNmsub ? RS3 : MUX_RD_RS3;
+                                 instr.rtype.opcode == riscv::OpcodeNmsub ||
+                                 instr.rtype.opcode == riscv::OpcodeCustom1 ? RS3 : MUX_RD_RS3;
       end
     end
 
