@@ -1,29 +1,12 @@
-/*
-**
-** Copyright 2020 OpenHW Group
-**
-** Licensed under the Solderpad Hardware Licence, Version 2.0 (the "License");
-** you may not use this file except in compliance with the License.
-** You may obtain a copy of the License at
-**
-**     https://solderpad.org/licenses/
-**
-** Unless required by applicable law or agreed to in writing, software
-** distributed under the License is distributed on an "AS IS" BASIS,
-** WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-** See the License for the specific language governing permissions and
-** limitations under the License.
-**
-*/
-
-#include <stdint.h>
 #include <stdio.h>
+#include <stdint.h>
 
 typedef int32_t i32;
 typedef uint32_t u32;
 typedef int8_t i8;
 typedef uint8_t u8;
 
+// https://en.wikipedia.org/wiki/Xorshift
 u32 xorshift32(u32 seed) {
     u32 x = seed;
 	x ^= x << 13;
@@ -55,22 +38,60 @@ inline i32 __fxmadd(i32 a, i32 b, i32 c, u8 inm) {
 __attribute__((always_inline))
 inline u8 test_fxmadd(const u8 inm, const u32 ntimes) {
     i32 a = 1, b = 2, c = 3;
+    //printf("Testing fxmac %u times\n", ntimes);
     for (int i = 0; i < ntimes; i++) {
-        
         a = xorshift32(a);
         b = xorshift32(b);
         c = xorshift32(c);
-        
         if (__fxmadd(a, b, c, inm) != fxmadd(a, b, c, inm)) {
-            return 1;
+            return 0;
         }
-		
     }
-    return 0;
+    return 1;
 }
 
-int main(int argc, char* arg[]) {
+__attribute__((always_inline))
+inline i32 __genum(u8 S) {
+    i32 r;
+    const u8 sgen = (31 - S) & 0b11111;
+    const u8 ilow = sgen & 0b111 ;
+	const u8 ihigh = (sgen >> 3) & 0b11;
+ 
+    asm volatile(
+		".insn r4 CUSTOM_0, %[ilow], %[ihigh], %[r], x0, x0, x0\n"
+        : [r] "=r" (r)
+        : [ilow] "i" (ilow), [ihigh] "i" (ihigh)
+        :
+    );
+    return r;
+}
 
-	return test_fxmadd(2, 10);
-	
+__attribute__((always_inline))
+inline void __seed(u32 v) {
+    asm volatile(
+        ".insn r CUSTOM_0, 0, 0b1000000, x0, %[v], x0\n"
+        :
+        : [v] "r" (v)
+        :
+    );
+}
+
+__attribute__((always_inline))
+inline void test_fxgen(u32 new_seed, u32 nsamples, u8 fxbits) {
+    //printf("Generating %u %u fxbit samples with seed %u\n", nsamples, fxbits, new_seed);
+    __seed(new_seed);
+    
+    for (u32 i = 0; i < nsamples; i++) {
+        uint32_t sample_fxp = __genum(fxbits);
+        float sample_float = (float) sample_fxp / (1 << fxbits);
+        //printf("FP %f FXP %lu\n", sample_float, sample_fxp);
+    }
+
+}
+
+int main() {
+    test_fxgen(0xBEBACAFE, 10, 10);
+    if(test_fxmadd(10, 10)) {
+        return 0;
+    }
 }
